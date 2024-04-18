@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +8,7 @@ public class Player : MonoBehaviour
     public int CurrentMana;
     public int MaxMana;
     public int TurnIndex;
-    public List<Card> deckModel = new List<Card>();
+    public List<Card> DeckModel = new List<Card>();
     public Deck Deck;
     public Deck Hand;
     public Deck Invoked;
@@ -18,8 +17,12 @@ public class Player : MonoBehaviour
     {
         PlayerIndex = index;
         name = "Player " + PlayerIndex;
-        Deck.SetupDeck();
-        deckModel = new List<Card>(Deck.CardList);
+        Deck = new Deck();
+        Hand = new Deck();
+        Invoked = new Deck();
+        SetupDeck(Deck);
+        DeckModel = new List<Card>(Deck.CardList);
+        GPCtrl.Instance.formerDeck = new List<Card>(DeckModel);
         ResetPlayer();
     }
 
@@ -28,12 +31,12 @@ public class Player : MonoBehaviour
         CurrentHealth = GPCtrl.Instance.StartHealth;
         MaxMana = 0;
         TurnIndex = 0;
-        Deck.CardList = new List<Card>(deckModel);
+        Deck.CardList = new List<Card>(DeckModel);
         Hand.CardList.Clear();
         Invoked.CardList.Clear();
         for (int i = 0; i < GPCtrl.Instance.StartHandCardNum; i++)
         {
-            Hand.CardList.Add(Deck.PickRandomCard());
+            Hand.CardList.Add(PickRandomCard(Deck));
         }
     }
 
@@ -41,15 +44,25 @@ public class Player : MonoBehaviour
     {
         MaxMana++;
         CurrentMana = MaxMana;
-        Hand.CardList.Add(Deck.PickRandomCard());
-        while (CurrentMana > 0 && Hand.CardList.Count > 0 && Hand.CanPlayCard(CurrentMana)) //tant qu'on peut invoquer des cartes on en invoque
+        if (Deck.CardList.Count == 0)
         {
-            //order to find most costly
-            //for now just get oldest one
-            //Debug.Log("mana left : " + CurrentMana);
-            Card card = Hand.GetOldestPlayableCard(CurrentMana);
-            PlayCard(card);
-            if (CurrentMana == 0) break;
+            Debug.Log("GAME OVER NO CARDS LEFT");
+            GPCtrl.Instance.GameOver(GetOtherPlayer());
+            return;
+        }
+        Hand.CardList.Add(PickRandomCard(Deck));
+        while (CurrentMana > 0 && Hand.CardList.Count > 0 && CanPlayCard(Hand)) //tant qu'on peut invoquer des cartes on en invoque
+        {
+            List<Card> cardList = GetPlayableCards(Hand);
+            int higherPrice = 0;
+            for (int i = 0; i < cardList.Count; i++)
+            {
+                if (cardList[i].Cost > higherPrice) higherPrice = cardList[i].Cost;
+            }
+
+            Card card = cardList.FindAll(x => x.Cost == higherPrice)[0];
+            if (card != null) PlayCard(card);
+            else break;
         }
         InflictDamage();
         if (!GPCtrl.Instance.IsGameOver)
@@ -59,7 +72,7 @@ public class Player : MonoBehaviour
     public void PlayCard(Card card)
     {
         CurrentMana -= card.Cost;
-        Invoked.CardList.Add(Hand.PickCard(card));
+        Invoked.CardList.Add(PickCard(Hand, card));
     }
 
     public void InflictDamage()
@@ -74,7 +87,6 @@ public class Player : MonoBehaviour
     public void Damage(int damage)
     {
         if (GPCtrl.Instance.IsGameOver) return;
-        //Debug.Log(GetOtherPlayer() + "take damage from " + name);
         CurrentHealth -= damage;
         if (CurrentHealth <= 0) Death();
     }
@@ -95,4 +107,65 @@ public class Player : MonoBehaviour
         if (PlayerIndex == 1) return 0;
         else return 1;
     }
+
+    #region DeckManagement
+    public void SetupDeck(Deck deck)
+    {
+        for (int i = 0; i < GPCtrl.Instance.DeckSize; i++)
+        {
+            Card card = GPCtrl.Instance.SetList[Random.Range(0, GPCtrl.Instance.SetList.Count)];
+            if (deck.CardList.FindAll(x => x == card).Count < GPCtrl.Instance.sameCardInDeck)
+            {
+                deck.CardList.Add(card);
+                //Debug.Log(PlayerIndex + " - attack : " + card.Attack + " - health : " + card.Health);
+            } else
+            {
+                i--;
+            }
+        }
+    }
+
+    public Card PickRandomCard(Deck deck)
+    {
+        Card card = deck.CardList[Random.Range(0, deck.CardList.Count)];
+        deck.CardList.Remove(card);
+        return card;
+    }
+
+    public Card PickCard(Deck deck, Card card)
+    {
+        deck.CardList.Remove(card);
+        return card;
+    }
+
+    public bool CanPlayCard(Deck deck)
+    {
+        bool canPlay = false;
+        for (int i = 0; i < deck.CardList.Count; i++)
+        {
+            if (deck.CardList[i].Cost <= CurrentMana) canPlay = true;
+        }
+        return canPlay;
+    }
+
+
+    public List<Card> GetPlayableCards(Deck deck)
+    {
+        List<Card> cardList = new List<Card>();
+        for (int i = 0; i < deck.CardList.Count; i++)
+        {
+            if (deck.CardList[i].Cost <= CurrentMana) cardList.Add(deck.CardList[i]);
+        }
+        return cardList;
+    }
+
+    public Card GetOldestPlayableCard(Deck deck)
+    {
+        for (int i = 0; i < deck.CardList.Count; i++)
+        {
+            if (deck.CardList[i].Cost <= CurrentMana) return deck.CardList[i];
+        }
+        return null;
+    }
+    #endregion
 }

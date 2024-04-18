@@ -264,11 +264,22 @@ MonoBehaviour:
   PlayerPrefab: {fileID: 8084691680256664826, guid: 2bf608723047ac8408cf337d0a52b3c1, type: 3}
   IsGameOver: 0
   GameNum: 0
+  GameNumMax: 1000
+  GameNumForFrame: 0
   GameWonByPlayer1: 0
+  TournamentNum: 0
+  TournamentNumMax: 1000
   StartHandCardNum: 5
   DeckSize: 30
   StartHealth: 20
-  GameTestNumMax: 500
+  sameCardInDeck: 2
+  formerWinRate: 0
+  formerDeck: []
+  JSONPath: C:\Users\alvin\Documents\video-game-projects
+  DeckFile: {fileID: 4900000, guid: 7bd8f0e0677304641acb4790e851443a, type: 3}
+  bestwinRateList: []
+  trueWinRateList: []
+  turnToNextFrame: 300
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
