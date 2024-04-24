@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 using System.IO;
+using System.Linq;
 
 public class GPCtrl : MonoBehaviour
 {
@@ -37,7 +38,8 @@ public class GPCtrl : MonoBehaviour
     [ReadOnly]
     public List<Card> formerDeck = new List<Card>();
     public string JSONPath;
-    public TextAsset DeckFile;
+    public TextAsset Player0DeckFile;
+    public TextAsset Player1DeckFile;
     [ReadOnly]
     public List<float> bestwinRateList;
     [ReadOnly]
@@ -78,7 +80,8 @@ public class GPCtrl : MonoBehaviour
             player.SetupPlayer(i);
             PlayerList.Add(player);
         }
-        if (DeckFile != null) ImportDeckFromJSON();
+        if (Player0DeckFile != null) ImportDeckFromJSON(0);
+        if (Player1DeckFile != null) ImportDeckFromJSON(1);
         PlayerList[0].StartTurn();
     }
 
@@ -126,6 +129,7 @@ public class GPCtrl : MonoBehaviour
                 Debug.Log("TEST OVER, took : " + (Time.realtimeSinceStartup - testStartupTime));
                 ExportDeckToJSON();
                 ExportWinRateToCSV();
+                ExportStatsToCSV();
             }
         }
     }
@@ -198,15 +202,42 @@ public class GPCtrl : MonoBehaviour
     public List<Card> GenerateCards()
     {
         List<Card> cards = new List<Card>();
-        for (int atk = 0; atk <= 6; atk++)
+        for (int atk = 0; atk <= 16; atk++)
         {
-            for (int def = 1; def <= 6; def++)
+            for (int def = 1; def <= 16; def++)
             {
-                Card card = new Card(atk, def);
-                if (card.Cost <= 6)
-                {
-                    cards.Add(card);
-                }
+                Card card = new Card(atk, def, false, false, false, false);
+                Card cardTaunt = new Card(atk, def, true, false, false, false);
+                Card cardTrample = new Card(atk, def, false, true, false, false);
+                Card cardTauntTrample = new Card(atk, def, true, true, false, false);
+                Card cardDistortion = new Card(atk, def, false, false, true, false);
+                Card cardTauntDistortion = new Card(atk, def, true, false, true, false);
+                Card cardTrampleDistortion = new Card(atk, def, false, true, true, false);
+                Card cardTauntTrampleDistortion = new Card(atk, def, true, true, true, false);
+                Card cardFirstStrike = new Card(atk, def, false, false, false, true);
+                Card cardTauntFirstStrike = new Card(atk, def, true, false, false, true);
+                Card cardTrampleFirstStrike = new Card(atk, def, false, true, false, true);
+                Card cardDistortionFirstStrike = new Card(atk, def, false, false, true, true);
+                Card cardTauntTrampleFirstStrike = new Card(atk, def, true, true, false, true);
+                Card cardTauntDistortionFirstStrike = new Card(atk, def, true, false, true, true);
+                Card cardTrampleDistortionFirstStrike = new Card(atk, def, false, true, true, true);
+                Card cardAll = new Card(atk, def, true, true, true, true);
+                if (card.Cost <= 8) cards.Add(card);
+                if (cardTaunt.Cost <= 8) cards.Add(cardTaunt);
+                if (cardTrample.Cost <= 8) cards.Add(cardTrample);
+                if (cardTauntTrample.Cost <= 8) cards.Add(cardTauntTrample);
+                if (cardDistortion.Cost <= 8) cards.Add(cardDistortion);
+                if (cardTauntDistortion.Cost <= 8) cards.Add(cardTauntDistortion);
+                if (cardTrampleDistortion.Cost <= 8) cards.Add(cardTrampleDistortion);
+                if (cardTauntTrampleDistortion.Cost <= 8) cards.Add(cardTauntTrampleDistortion);
+                if (cardFirstStrike.Cost <= 8) cards.Add(cardFirstStrike);
+                if (cardTauntFirstStrike.Cost <= 8) cards.Add(cardTauntFirstStrike);
+                if (cardTrampleFirstStrike.Cost <= 8) cards.Add(cardTrampleFirstStrike);
+                if (cardDistortionFirstStrike.Cost <= 8) cards.Add(cardDistortionFirstStrike);
+                if (cardTauntTrampleFirstStrike.Cost <= 8) cards.Add(cardTauntTrampleFirstStrike);
+                if (cardTauntDistortionFirstStrike.Cost <= 8) cards.Add(cardTauntDistortionFirstStrike);
+                if (cardTrampleDistortionFirstStrike.Cost <= 8) cards.Add(cardTrampleDistortionFirstStrike);
+                if (cardAll.Cost <= 8) cards.Add(cardAll);
             }
         }
         return cards;
@@ -234,11 +265,40 @@ public class GPCtrl : MonoBehaviour
         writer.Close();
     }
 
-    [Button]
-    public void ImportDeckFromJSON()
+    public void ExportStatsToCSV()
     {
-        Deck deck = JsonUtility.FromJson<Deck>(DeckFile.text);
-        PlayerList[1].Deck.CardList = new List<Card>(deck.CardList);
-        PlayerList[1].DeckModel = new List<Card>(deck.CardList);
+        string filePath = JSONPath;
+
+        StreamWriter writer = new StreamWriter(filePath + "/stats.csv");
+
+        //writer.WriteLine("HasTaunt; HasTrample; HasDistortion; HasFirstStrike");
+        List<string> stringList = new List<string>();
+        for (int i = 0; i < PlayerList[0].DeckModel.Count; ++i)
+        {
+            string value = PlayerList[0].DeckModel[i].HasTaunt ? "Taunt" : "";
+            value += (PlayerList[0].DeckModel[i].HasTrample ? "Trample" : "");
+            value += (PlayerList[0].DeckModel[i].HasDistortion ? "Distortion" : "");
+            value += (PlayerList[0].DeckModel[i].HasFirstStrike ? "FirstStrike" : "") ;
+            if (value == "") value = "No power";
+            stringList.Add(value);
+            //writer.WriteLine(value);
+        }
+
+        var a = stringList.GroupBy(x => x);
+
+        foreach(var y in a )
+        {
+            writer.WriteLine(y.Key + ";" + y.Count());
+        }
+        writer.Flush();
+        writer.Close();
+    }
+
+    [Button]
+    public void ImportDeckFromJSON(int playerIndex)
+    {
+        Deck deck = JsonUtility.FromJson<Deck>(Player1DeckFile.text);
+        PlayerList[playerIndex].Deck.CardList = new List<Card>(deck.CardList);
+        PlayerList[playerIndex].DeckModel = new List<Card>(deck.CardList);
     }
 }
