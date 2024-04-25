@@ -42,6 +42,8 @@ public class GPCtrl : MonoBehaviour
     public List<float> bestwinRateList;
     [ReadOnly]
     public List<float> trueWinRateList;
+    public List<float> turnNumList;
+    public List<float> turnNumAverageList;
 
     [Header("PERFORMANCE")]
     public int turnToNextFrame;
@@ -105,6 +107,7 @@ public class GPCtrl : MonoBehaviour
 
     public void CheckNewGame()
     {
+        turnNumList.Add(PlayerList[0].TurnIndex);
         if (GameNum < GameNumMax)
         {
             for (int i = 0; i < PlayerList.Count; i++)
@@ -118,6 +121,14 @@ public class GPCtrl : MonoBehaviour
         }
         else
         {
+            float total = 0;
+            for (int i = 0; i < turnNumList.Count; i++)
+            {
+                total += turnNumList[i];
+            }
+            float average = total / turnNumList.Count;
+            turnNumAverageList.Add(average);
+            turnNumList.Clear();
             TournamentNum++;
             if (TournamentNum < TournamentNumMax)
                 ChangeDeck();
@@ -126,6 +137,7 @@ public class GPCtrl : MonoBehaviour
                 Debug.Log("TEST OVER, took : " + (Time.realtimeSinceStartup - testStartupTime));
                 ExportDeckToJSON();
                 ExportWinRateToCSV();
+                ExportTurnNumToCSV();
             }
         }
     }
@@ -229,6 +241,20 @@ public class GPCtrl : MonoBehaviour
         for (int i = 0; i < bestwinRateList.Count; ++i)
         {
             writer.WriteLine(trueWinRateList[i] + ";" + bestwinRateList[i]);
+        }
+        writer.Flush();
+        writer.Close();
+    }
+
+    public void ExportTurnNumToCSV()
+    {
+        string filePath = JSONPath;
+
+        StreamWriter writer = new StreamWriter(filePath + "/turnNum.csv");
+
+        for (int i = 0; i < turnNumAverageList.Count; ++i)
+        {
+            writer.WriteLine(turnNumAverageList[i]);
         }
         writer.Flush();
         writer.Close();
