@@ -84,6 +84,7 @@ public class GPCtrl : MonoBehaviour
         }
         if (Player0DeckFile != null) ImportDeckFromJSON(0);
         if (Player1DeckFile != null) ImportDeckFromJSON(1);
+        //Debug.Break();
         PlayerList[0].StartTurn();
     }
 
@@ -321,10 +322,9 @@ public class GPCtrl : MonoBehaviour
         writer.Close();
     }
 
-    [Button]
     public void ImportDeckFromJSON(int playerIndex)
     {
-        Deck deck = JsonUtility.FromJson<Deck>(Player1DeckFile.text);
+        Deck deck = JsonUtility.FromJson<Deck>(playerIndex == 0 ? Player0DeckFile.text : Player1DeckFile.text);
         PlayerList[playerIndex].Deck.CardList = new List<Card>(deck.CardList);
         PlayerList[playerIndex].DeckModel = new List<Card>(deck.CardList);
     }
