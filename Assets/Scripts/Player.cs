@@ -47,7 +47,7 @@ public class Player : MonoBehaviour
         if (Deck.CardList.Count == 0)
         {
             Debug.Log("GAME OVER NO CARDS LEFT");
-            GPCtrl.Instance.GameOver(GetOtherPlayer());
+            GPCtrl.Instance.GameOver(GetOtherPlayerIndex());
             return;
         }
         Hand.CardList.Add(PickRandomCard(Deck));
@@ -77,10 +77,44 @@ public class Player : MonoBehaviour
 
     public void InflictDamage()
     {
+        List<Card> attackedCards = new List<Card>();
         for (int i = 0; i < Invoked.CardList.Count; i++)
         {
-            Player enemyPlayer = GPCtrl.Instance.PlayerList[GetOtherPlayer()];
-            enemyPlayer.Damage(Invoked.CardList[i].Attack);
+            Player enemyPlayer = GetOtherPlayer();
+            Card tauntCard = enemyPlayer.Invoked.CardList.Find(x => x.HasTaunt);
+            if (tauntCard != null && !(Invoked.CardList[i].HasDistortion && !tauntCard.HasDistortion)) //si le jeu adverse a des cartes avec la capacité provoc
+            {
+                if (!attackedCards.Contains(tauntCard)) attackedCards.Add(tauntCard);
+                tauntCard.CurrentHealth -= Invoked.CardList[i].Attack;
+                Invoked.CardList[i].CurrentHealth -= tauntCard.Attack;
+                //Debug.Log(tauntCard.Defense + " health : " + tauntCard.CurrentHealth);
+                //Debug.Break();
+
+                if (Invoked.CardList[i].HasFirstStrike && tauntCard.CurrentHealth <= 0)
+                {
+                    if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
+                    enemyPlayer.Invoked.CardList.Remove(tauntCard);
+                } else {
+                    if (tauntCard.CurrentHealth <= 0)
+                    {
+                        if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
+                        enemyPlayer.Invoked.CardList.Remove(tauntCard);
+                    }
+                    if (Invoked.CardList[i].CurrentHealth <= 0)
+                    {
+                        Invoked.CardList.Remove(Invoked.CardList[i]);
+                        i--;
+                        if (i == Invoked.CardList.Count) break;
+                    }
+                }
+            } else
+            {
+                enemyPlayer.Damage(Invoked.CardList[i].Attack);
+            }
+        }
+        for (int i = 0; i < attackedCards.Count; i++) //reset life of card at end of turn
+        {
+            attackedCards[i].CurrentHealth = attackedCards[i].Defense; 
         }
     }
 
@@ -93,19 +127,25 @@ public class Player : MonoBehaviour
 
     public void Death()
     {
-        GPCtrl.Instance.GameOver(GetOtherPlayer());
+        GPCtrl.Instance.GameOver(GetOtherPlayerIndex());
     }
 
     public void EndTurn()
     {
         TurnIndex++;
-        GPCtrl.Instance.PlayerList[GetOtherPlayer()].StartTurn();
+        GPCtrl.Instance.PlayerList[GetOtherPlayerIndex()].StartTurn();
     }
 
-    public int GetOtherPlayer()
+    public int GetOtherPlayerIndex()
     {
         if (PlayerIndex == 1) return 0;
         else return 1;
+    }
+
+    public Player GetOtherPlayer()
+    {
+        if (PlayerIndex == 1) return GPCtrl.Instance.PlayerList[0];
+        else return GPCtrl.Instance.PlayerList[1];
     }
 
     #region DeckManagement

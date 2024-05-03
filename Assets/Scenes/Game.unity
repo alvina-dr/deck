@@ -276,10 +276,11 @@ MonoBehaviour:
   formerWinRate: 0
   formerDeck: []
   JSONPath: C:\Users\alvin\Documents\video-game-projects
-  DeckFile: {fileID: 4900000, guid: 7bd8f0e0677304641acb4790e851443a, type: 3}
+  Player0DeckFile: {fileID: 4900000, guid: 7bd8f0e0677304641acb4790e851443a, type: 3}
+  Player1DeckFile: {fileID: 4900000, guid: 7bd8f0e0677304641acb4790e851443a, type: 3}
   bestwinRateList: []
   trueWinRateList: []
-  turnToNextFrame: 300
+  turnToNextFrame: 250
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
