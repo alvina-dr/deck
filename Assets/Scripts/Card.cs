@@ -12,6 +12,7 @@ public class Card
     public bool HasTrample;
     public bool HasDistortion;
     public bool HasFirstStrike;
+    public int Score;
     [System.NonSerialized] public int CurrentHealth;
 
     public Card(int attack, int defense, bool hasTaunt, bool hasTrample, bool hasDistortion, bool hasFirstStrike)
@@ -23,6 +24,7 @@ public class Card
         HasDistortion = hasDistortion;
         HasFirstStrike = hasFirstStrike;
         CurrentHealth = Defense;
+        Score = 0;
         Cost = Mathf.CeilToInt((Attack + Defense) / 2f + (HasTaunt ? 1.5f : 0) + (HasTrample ? 1f : 0) + (HasDistortion ? 1f : 0) + (HasFirstStrike ? 1f : 0));
     }
 }

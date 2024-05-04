@@ -95,11 +95,11 @@ public class Player : MonoBehaviour
                     if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
                     enemyPlayer.Invoked.CardList.Remove(tauntCard);
                 } else {
-                    Debug.Log("in else :  " + Invoked.CardList[i].CurrentHealth);
                     if (tauntCard.CurrentHealth <= 0)
                     {
                         if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
                         enemyPlayer.Invoked.CardList.Remove(tauntCard);
+                        if (GPCtrl.Instance.IsGameOver) break;
                     }
                     if (Invoked.CardList[i].CurrentHealth <= 0)
                     {

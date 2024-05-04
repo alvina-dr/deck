@@ -275,8 +275,8 @@ MonoBehaviour:
   sameCardInDeck: 2
   formerWinRate: 0
   formerDeck: []
-  JSONPath: C:\Users\ELE64f86f1069856\Desktop\repositories
-  Player0DeckFile: {fileID: 0}
+  JSONPath: C:\Users\alvin\Documents\video-game-projects
+  Player0DeckFile: {fileID: 4900000, guid: 7bd8f0e0677304641acb4790e851443a, type: 3}
   Player1DeckFile: {fileID: 0}
   bestwinRateList: []
   trueWinRateList: []
