@@ -50,6 +50,7 @@ public class Player : MonoBehaviour
             GPCtrl.Instance.GameOver(GetOtherPlayerIndex());
             return;
         }
+        //draw card
         Hand.CardList.Add(PickRandomCard(Deck));
         while (CurrentMana > 0 && Hand.CardList.Count > 0 && CanPlayCard(Hand)) //tant qu'on peut invoquer des cartes on en invoque
         {
@@ -80,27 +81,73 @@ public class Player : MonoBehaviour
         List<Card> attackedCards = new List<Card>();
         for (int i = 0; i < Invoked.CardList.Count; i++)
         {
+            if (i == Invoked.CardList.Count) break;
             Player enemyPlayer = GetOtherPlayer();
             Card tauntCard = enemyPlayer.Invoked.CardList.Find(x => x.HasTaunt);
-            if (tauntCard != null && !(Invoked.CardList[i].HasDistortion && !tauntCard.HasDistortion)) //si le jeu adverse a des cartes avec la capacité provoc
+            if (tauntCard != null && !(Invoked.CardList[i].HasDistortion && !tauntCard.HasDistortion)) //si le jeu adverse a au moins une carte avec la capacité provoc
             {
                 if (!attackedCards.Contains(tauntCard)) attackedCards.Add(tauntCard);
+                //damage enemy taunt card
                 tauntCard.CurrentHealth -= Invoked.CardList[i].Attack;
+                //damage playing ally card
                 Invoked.CardList[i].CurrentHealth -= tauntCard.Attack;
                 //Debug.Log(tauntCard.Defense + " health : " + tauntCard.CurrentHealth);
                 //Debug.Break();
 
+                if (tauntCard.HasFirstStrike)
+                {
+                    if (Invoked.CardList[i].HasFirstStrike)
+                    {
+                        //destroy enemy card if dead
+                        if (tauntCard.CurrentHealth <= 0)
+                        {
+                            //apply trample to enemy
+                            if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
+                            enemyPlayer.Invoked.CardList.Remove(tauntCard);
+                            if (GPCtrl.Instance.IsGameOver) break;
+                        }
+                        //destroy ally card if dead
+                        if (Invoked.CardList[i].CurrentHealth <= 0)
+                        {
+                            Invoked.CardList.Remove(Invoked.CardList[i]);
+                            i--;
+                            if (i == Invoked.CardList.Count) break;
+                        }
+                    }
+                    else
+                    {
+                        //destroy ally card if dead
+                        if (Invoked.CardList[i].CurrentHealth <= 0)
+                        {
+                            Invoked.CardList.Remove(Invoked.CardList[i]);
+                            i--;
+                            if (i == Invoked.CardList.Count) break;
+                        }
+                        else if (tauntCard.CurrentHealth <= 0) // destroy enemy card only if ally card survived
+                        {
+                            //apply trample to enemy
+                            if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
+                            enemyPlayer.Invoked.CardList.Remove(tauntCard);
+                            if (GPCtrl.Instance.IsGameOver) break;
+                        }
+                    }
+                    continue;
+                }
+                //enemy hasn't fs
                 if (Invoked.CardList[i].HasFirstStrike && tauntCard.CurrentHealth <= 0)
                 {
+                    //apply trample to enemy
                     if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
                     enemyPlayer.Invoked.CardList.Remove(tauntCard);
                 } else {
+                    //if playing ally card hasn't first strike and ennemy is dead
                     if (tauntCard.CurrentHealth <= 0)
                     {
                         if (Invoked.CardList[i].HasTrample && tauntCard.CurrentHealth < 0) enemyPlayer.Damage(tauntCard.CurrentHealth * -1);
                         enemyPlayer.Invoked.CardList.Remove(tauntCard);
                         if (GPCtrl.Instance.IsGameOver) break;
                     }
+                    //if ally card hasn't fs and both cards (or ally only) is dead, or ally has fs and both card are dead.
                     if (Invoked.CardList[i].CurrentHealth <= 0)
                     {
                         Invoked.CardList.Remove(Invoked.CardList[i]);
