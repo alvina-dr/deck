@@ -31,6 +31,9 @@ public class GPCtrl : MonoBehaviour
     public int DeckSize;
     public int StartHealth;
     public int sameCardInDeck;
+    public int winScoreAdd;
+    public int loseScoreAdd;
+    public int scoreMin;
 
     [Header("COMPARISON")]
     [ReadOnly]
@@ -169,6 +172,15 @@ public class GPCtrl : MonoBehaviour
         }
     }
 
+    public void EvaluateCards(int scoreAdded)
+    {
+        foreach (var card in PlayerList[0].DeckModel)
+        {
+            SetList.Find(x => x == card).Score += scoreAdded;
+            card.Score = SetList.Find(x => x == card).Score;
+        }
+    }
+
     public void ChangeDeck()
     {
         GameNumForFrame = turnToNextFrame;
@@ -176,9 +188,11 @@ public class GPCtrl : MonoBehaviour
         trueWinRateList.Add(newWinRate);
         if (newWinRate < formerWinRate)
         {
+            EvaluateCards(loseScoreAdd);
             PlayerList[0].DeckModel = new List<Card>(formerDeck);
         } else
         {
+            EvaluateCards(winScoreAdd);
             formerWinRate = newWinRate;
             formerDeck = new List<Card>(PlayerList[0].DeckModel);
         }
@@ -190,9 +204,9 @@ public class GPCtrl : MonoBehaviour
         for (int i = 0; i < 1; i++)
         {
             Card card = SetList[Random.Range(0, SetList.Count)];
-            if (PlayerList[0].DeckModel.FindAll(x => x == card).Count < sameCardInDeck)
+            if (PlayerList[0].DeckModel.FindAll(x => x == card).Count < sameCardInDeck && card.Score >= scoreMin)
             {
-                PlayerList[0].DeckModel.Add(SetList[Random.Range(0, SetList.Count)]);
+                PlayerList[0].DeckModel.Add(card);
             }
             else
             {
