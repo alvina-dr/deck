@@ -273,9 +273,12 @@ MonoBehaviour:
   DeckSize: 30
   StartHealth: 20
   sameCardInDeck: 2
+  winScoreAdd: 2
+  loseScoreAdd: -1
+  scoreMin: -5
   formerWinRate: 0
   formerDeck: []
-  JSONPath: C:\Users\alvin\Documents\video-game-projects
+  JSONPath: E:\_Files\_Cours\Prog\cards
   Player0DeckFile: {fileID: 4900000, guid: 7bd8f0e0677304641acb4790e851443a, type: 3}
   Player1DeckFile: {fileID: 0}
   bestwinRateList: []

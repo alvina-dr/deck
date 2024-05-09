@@ -47,6 +47,7 @@ public class GPCtrl : MonoBehaviour
     public List<float> bestwinRateList;
     [ReadOnly]
     public List<float> trueWinRateList;
+    public List<int> AttackRate;
     public List<float> turnNumList;
     public List<float> turnNumAverageList;
 
@@ -73,11 +74,8 @@ public class GPCtrl : MonoBehaviour
 
     #endregion
 
-    [Button]
-    public void LaunchGame()
+    public void SetupPlayers()
     {
-        startupTime = Time.realtimeSinceStartup;
-        testStartupTime = Time.realtimeSinceStartup;
         SetList = GenerateCards();
         for (int i = 0; i < 2; i++)
         {
@@ -85,8 +83,19 @@ public class GPCtrl : MonoBehaviour
             player.SetupPlayer(i);
             PlayerList.Add(player);
         }
+    }
+
+    [Button]
+    public void LaunchGame()
+    {
+        startupTime = Time.realtimeSinceStartup;
+        testStartupTime = Time.realtimeSinceStartup;
+        SetupPlayers();
         if (Player0DeckFile != null) ImportDeckFromJSON(0);
         if (Player1DeckFile != null) ImportDeckFromJSON(1);
+        ExportDeckToJSON("old");
+        ExportStatsToCSV("old");
+        ExportCostToJSON("old");
         //Debug.Break();
         PlayerList[0].StartTurn();
     }
@@ -142,10 +151,12 @@ public class GPCtrl : MonoBehaviour
             else
             {
                 Debug.Log("TEST OVER, took : " + (Time.realtimeSinceStartup - testStartupTime));
-                ExportDeckToJSON();
-                ExportWinRateToCSV();
-                ExportTurnNumToCSV();
-                ExportStatsToCSV();
+                ExportDeckToJSON("new");
+                ExportWinRateToCSV("new");
+                ExportTurnNumToCSV("new");
+                ExportStatsToCSV("new");
+                ExportCostToJSON("new");
+
             }
         }
     }
@@ -270,19 +281,44 @@ public class GPCtrl : MonoBehaviour
         return cards;
     }
 
-    public void ExportDeckToJSON()
+    public void ExportCostToJSON(string suffix)
+    {
+        string filePath = JSONPath;
+
+        StreamWriter writer = new StreamWriter(filePath + "/CardsCost" + suffix + ".csv");
+
+        //writer.WriteLine("HasTaunt; HasTrample; HasDistortion; HasFirstStrike");
+        List<int> intList = new List<int>();
+        for (int i = 0; i < 8; i++)
+        {
+            intList.Add(0);
+        }
+        for (int i = 0; i < PlayerList[0].DeckModel.Count; ++i)
+        {
+            int value = PlayerList[0].DeckModel[i].Cost;
+            intList[value-1]++;
+        }
+        for (int i = 0; i < 8; i++)
+        {
+            writer.WriteLine(i + ";" + intList[i] );
+        }
+        writer.Flush();
+        writer.Close();
+    }
+
+    public void ExportDeckToJSON(string suffix)
     {
         Deck deck = new Deck();
         deck.CardList = new List<Card>(PlayerList[0].DeckModel);
         string exportString = JsonUtility.ToJson(deck);
-        System.IO.File.WriteAllText(JSONPath + "/DeckModel.json", exportString);
+        System.IO.File.WriteAllText(JSONPath + "/DeckModel"+ suffix + ".json", exportString);
     }
 
-    public void ExportWinRateToCSV()
+    public void ExportWinRateToCSV(string suffix)
     {
         string filePath = JSONPath;
 
-        StreamWriter writer = new StreamWriter(filePath + "/winRate.csv");
+        StreamWriter writer = new StreamWriter(filePath + "/winRate"+ suffix+".csv");
 
         for (int i = 0; i < bestwinRateList.Count; ++i)
         {
@@ -292,11 +328,11 @@ public class GPCtrl : MonoBehaviour
         writer.Close();
     }
 
-    public void ExportTurnNumToCSV()
+    public void ExportTurnNumToCSV(string suffix)
     {
         string filePath = JSONPath;
 
-        StreamWriter writer = new StreamWriter(filePath + "/turnNum.csv");
+        StreamWriter writer = new StreamWriter(filePath + "/turnNum"+ suffix + ".csv");
 
         for (int i = 0; i < turnNumAverageList.Count; ++i)
         {
@@ -307,11 +343,11 @@ public class GPCtrl : MonoBehaviour
     }
 
     [Button]
-    public void ExportStatsToCSV()
+    public void ExportStatsToCSV(string suffix)
     {
         string filePath = JSONPath;
 
-        StreamWriter writer = new StreamWriter(filePath + "/stats.csv");
+        StreamWriter writer = new StreamWriter(filePath + "/stats"+suffix+".csv");
 
         //writer.WriteLine("HasTaunt; HasTrample; HasDistortion; HasFirstStrike");
         List<string> stringList = new List<string>();

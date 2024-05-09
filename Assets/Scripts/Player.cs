@@ -1,3 +1,4 @@
+using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -78,11 +79,15 @@ public class Player : MonoBehaviour
 
     public void InflictDamage()
     {
+        Player enemyPlayer = GetOtherPlayer();
+        foreach (var card in Invoked.CardList)
+            card.CurrentHealth = card.Defense;
+        foreach (var card in enemyPlayer.Invoked.CardList)
+            card.CurrentHealth = card.Defense;
         List<Card> attackedCards = new List<Card>();
         for (int i = 0; i < Invoked.CardList.Count; i++)
         {
             if (i == Invoked.CardList.Count) break;
-            Player enemyPlayer = GetOtherPlayer();
             Card tauntCard = enemyPlayer.Invoked.CardList.Find(x => x.HasTaunt);
             if (tauntCard != null && !(Invoked.CardList[i].HasDistortion && !tauntCard.HasDistortion)) //si le jeu adverse a au moins une carte avec la capacité provoc
             {
