@@ -105,6 +105,8 @@ public class GPCtrl : MonoBehaviour
         if (winnerIndex == 0) GameWonByPlayer1++;
         IsGameOver = true;
 
+        
+
         GameNum++;
         GameNumForFrame++;
         if (GameNumForFrame >= turnToNextFrame) StartCoroutine(NextFrame());
@@ -183,12 +185,13 @@ public class GPCtrl : MonoBehaviour
         }
     }
 
-    public void EvaluateCards(int scoreAdded)
+    public void EvaluateCards(Player player, int scoreAdded)
     {
-        foreach (var card in PlayerList[0].DeckModel)
+        for (int i = 0; i < player.DeckModel.Count; i++)
         {
+            Card card = player.DeckModel[i];
             SetList.Find(x => x == card).Score += scoreAdded;
-            card.Score = SetList.Find(x => x == card).Score;
+            card.Score = SetList.Find(x => x == card).Score;            
         }
     }
 
@@ -199,29 +202,69 @@ public class GPCtrl : MonoBehaviour
         trueWinRateList.Add(newWinRate);
         if (newWinRate < formerWinRate)
         {
-            EvaluateCards(loseScoreAdd);
             PlayerList[0].DeckModel = new List<Card>(formerDeck);
         } else
         {
-            EvaluateCards(winScoreAdd);
             formerWinRate = newWinRate;
             formerDeck = new List<Card>(PlayerList[0].DeckModel);
         }
         bestwinRateList.Add(formerWinRate);
+        
+        EvaluateCards(PlayerList[0], (int)(newWinRate*100) - (int)((1-newWinRate) * 100));
+        EvaluateCards(PlayerList[1], (int)((1-newWinRate) * 100) - (int)(newWinRate * 100));
 
         //CHANGE DECK MODEL
         PlayerList[0].DeckModel.RemoveAt(Random.Range(0, PlayerList[0].DeckModel.Count));
 
-        for (int i = 0; i < 1; i++)
+        int count = 0;
+        for (int j = 0; j < 1; j++)
         {
-            Card card = SetList[Random.Range(0, SetList.Count)];
-            if (PlayerList[0].DeckModel.FindAll(x => x == card).Count < sameCardInDeck && card.Score >= scoreMin)
+            count++;
+            bool doIgnoreScore = false;
+            if (count > 100)
             {
-                PlayerList[0].DeckModel.Add(card);
+                doIgnoreScore = true;
+            }
+            Card newCard = SetList[Random.Range(0, SetList.Count)];
+            if (PlayerList[0].DeckModel.FindAll(x => x == newCard).Count < sameCardInDeck && (newCard.Score >= scoreMin || doIgnoreScore))
+            {
+                PlayerList[0].DeckModel.Add(newCard);
             }
             else
             {
-                i--;
+                j--;
+            }
+        }
+
+        //check to have no bad score cards
+        for (int i = 0; i < PlayerList[0].DeckModel.Count; i++)
+        {
+            Card card = PlayerList[0].DeckModel[i];
+            if (card.Score >= scoreMin)
+            {
+                continue;
+            }
+            Debug.Log("Card to low");
+            PlayerList[0].DeckModel.Remove(card);
+            i--;
+            int count1 = 0;
+            for (int j = 0; j < 1; j++)
+            {
+                count1++;
+                if (count1 > 100)
+                {
+                    PlayerList[0].DeckModel.Add(card);
+                    break;
+                }
+                Card newCard = SetList[Random.Range(0, SetList.Count)];
+                if (PlayerList[0].DeckModel.FindAll(x => x == newCard).Count < sameCardInDeck && newCard.Score >= scoreMin)
+                {
+                    PlayerList[0].DeckModel.Add(newCard);
+                }
+                else
+                {
+                    j--;
+                }
             }
         }
 
